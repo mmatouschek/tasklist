@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "A productivity to-do task item with required due date",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the owner"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Title or short summary of the task"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Detailed notes or markdown text for the task"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "urgent"],
+          "description": "Task urgency / importance level"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Category name for organizing tasks"
+        },
+        "tags": {
+          "type": "array",
+          "description": "List of tags attached to the task (max 10)"
+        },
+        "dueDate": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "ISO date-time string when task is due (required)"
+        },
+        "reminderMinutesBefore": {
+          "type": "number",
+          "description": "Minutes prior to deadline to trigger a reminder"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the task is finished"
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Timestamp when task was marked completed"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Server timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Server timestamp of last update"
+        }
+      },
+      "required": ["userId", "title", "priority", "category", "dueDate", "completed", "createdAt", "updatedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User preferences, gamification stats, and security settings",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User display name"
+        },
+        "palette": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Active UI color palette ID"
+        },
+        "xp": {
+          "type": "number",
+          "description": "Total gamification experience points"
+        },
+        "level": {
+          "type": "number",
+          "description": "Current player level"
+        },
+        "unlockedAchievements": {
+          "type": "array",
+          "description": "List of unlocked achievement IDs"
+        },
+        "singleUserMode": {
+          "type": "boolean",
+          "description": "Lock app interface to owner email only"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["userId", "email", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Collection of tasks created by authenticated users"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private profile and settings document for each user"
+    }
+  }
+}

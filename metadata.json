@@ -1,0 +1,6 @@
+{
+  "name": "TaskPulse - Realtime Productivity & To-Do",
+  "description": "Mobile-first real-time to-do list with priority sorting, tag filters, deadline alerts, dark mode, and Firebase cloud sync.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

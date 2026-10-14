@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: default-deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTask(data) {
+      return data.userId == request.auth.uid &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+             data.priority in ['low', 'medium', 'high', 'urgent'] &&
+             data.category is string &&
+             data.category.size() <= 50 &&
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 10 && (data.tags.size() == 0 || data.tags[0] is string))) &&
+             (data.dueDate is string && data.dueDate.size() <= 40) &&
+             (!('reminderMinutesBefore' in data) || data.reminderMinutesBefore is number) &&
+             data.completed is bool &&
+             (!('completedAt' in data) || data.completedAt == null || (data.completedAt is string && data.completedAt.size() <= 40)) &&
+             data.createdAt is string &&
+             data.updatedAt is string;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.email is string &&
+             data.email.size() <= 150 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('theme' in data) || (data.theme is string && data.theme.size() <= 50)) &&
+             (!('palette' in data) || (data.palette is string && data.palette.size() <= 50)) &&
+             (!('xp' in data) || data.xp is number) &&
+             (!('level' in data) || data.level is number) &&
+             (!('unlockedAchievements' in data) || data.unlockedAchievements is list) &&
+             (!('singleUserMode' in data) || data.singleUserMode is bool) &&
+             data.updatedAt is string;
+    }
+
+    // Tasks Collection
+    match /tasks/{taskId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid && isValidId(taskId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() &&
+                       isValidId(taskId) &&
+                       isValidTask(incoming()) &&
+                       incoming().userId == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(taskId) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidTask(incoming());
+
+      allow delete: if isSignedIn() &&
+                       isValidId(taskId) &&
+                       existing().userId == request.auth.uid;
+    }
+
+    // User Profile Document
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId && isValidId(userId);
+      allow list: if false;
+
+      allow create, update: if isSignedIn() &&
+                               request.auth.uid == userId &&
+                               isValidId(userId) &&
+                               isValidUserProfile(incoming(), userId);
+
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(userId);
+    }
+  }
+}
